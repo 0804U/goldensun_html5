@@ -182,6 +182,7 @@ function fireEvent(){
 				hero.loadTexture(u([hero_name, "climb"]));
 		    	main_char_list[hero_name].setAnimation(hero, "climb");
 		    	hero.animations.play(u(["climb", "start"]), 9, false, true);
+				game.physics.p2.pause();
 		    } else if(current_event.activation_direction == "up"){
 		    	on_event = true;
 				event_activation_process = false;
@@ -189,7 +190,7 @@ function fireEvent(){
 	    		main_char_list[hero_name].setAnimation(hero, "climb");
 	    		hero.animations.play(u(["climb", "idle"]));
 	    		var out_time = Phaser.Timer.QUARTER/2;
-				game.add.tween(hero.body).to( { y: hero.y - 15 }, out_time, Phaser.Easing.Exponential.InOut, true);
+				game.add.tween(hero.body).to( { y: hero.y - 15 }, out_time, Phaser.Easing.Linear.None, true);
 				game.time.events.add(out_time + 50, function(){
 					on_event = false;
 	    			climbing = true;
@@ -206,17 +207,18 @@ function fireEvent(){
 				event_activation_process = false;
 				hero.animations.play(u(["climb", "end"]), 8, false, false);
 				shadow.visible = false;
-				var time = Phaser.Timer.QUARTER;
-				game.add.tween(hero.body).to( { y: hero.y - 12 }, time, Phaser.Easing.Linear.None, true);
+				game.add.tween(hero.body).to( { y: hero.y - 12 }, Phaser.Timer.QUARTER, Phaser.Easing.Linear.None, true);
 			} else if(current_event.activation_direction == "down"){
 				on_event = true;
 				event_activation_process = false;
+				game.physics.p2.pause();
 				hero.loadTexture(u([hero_name, "idle"]));
 	    		main_char_list[hero_name].setAnimation(hero, "idle");
 	    		hero.animations.play(u(["idle", "up"]));
-	    		var out_time = Phaser.Timer.QUARTER/2;
-				game.add.tween(hero.body).to( { y: hero.y + 15 }, out_time, Phaser.Easing.Exponential.InOut, true);
+	    		var out_time = Phaser.Timer.QUARTER/3;
+				game.add.tween(hero.body).to( { y: hero.y + 15 }, out_time, Phaser.Easing.Linear.None, true);
 				game.time.events.add(out_time + 50, function(){
+					game.physics.p2.resume();
 					on_event = false;
 	    			climbing = false;
 	    			current_event = null;
@@ -243,6 +245,7 @@ function fireEvent(){
 				teleporting = true;
 		} else if(current_event.type = "jump"){
 			on_event = true;
+			game.physics.p2.pause();
 			event_activation_process = false;
 			jumping = true;
 		}
@@ -372,13 +375,13 @@ function update() {
 	    for (var i=0; i < game.physics.p2.world.narrowphase.contactEquations.length; i++){
 	        var c = game.physics.p2.world.narrowphase.contactEquations[i];
 	        if (c.bodyA === hero.body.data){
-	        	if(c.contactPointA[0] >= 0.25 && actual_direction == "left")
+	        	if(c.contactPointA[0] >= 0.30 && actual_direction == "left")
 	        		hero.body.velocity.x = 0;
-	        	if(c.contactPointA[0] <= -0.25 && actual_direction == "right")
+	        	if(c.contactPointA[0] <= -0.30 && actual_direction == "right")
 	        		hero.body.velocity.x = 0;
-	        	if(c.contactPointA[1] <= -0.25 && actual_direction == "down")
+	        	if(c.contactPointA[1] <= -0.30 && actual_direction == "down")
 	        		hero.body.velocity.y = 0;
-	        	if(c.contactPointA[1] >= 0.25 && actual_direction == "up")
+	        	if(c.contactPointA[1] >= 0.30 && actual_direction == "up")
 	        		hero.body.velocity.y = 0;
 	        	break;
 	        }
@@ -398,6 +401,7 @@ function update() {
 				game.add.tween(hero.body).to( { y: hero.y + 25 }, 500, Phaser.Easing.Linear.None, true);
 			} else if(hero.animations.frameName == "climb/start/06"){
 	    		hero.animations.play(u(["climb", "idle"]), 9);
+				game.physics.p2.resume();
 	    		on_event = false;
 	    		climbing = true;
 	    		actual_action = "climb";
@@ -468,12 +472,13 @@ function update() {
 		} else if(jumping){
 			jumping = false;
 			var kill_jump = function(){
+				game.physics.p2.resume();
 				on_event = false;
 				current_event = null;
 				shadow.visible = true;
 			};
 			shadow.visible = false;
-			var jump_offset = 16;
+			var jump_offset = 32;
 			var direction;
 			if(current_event.activation_direction == "left"){
 				jump_offset = -jump_offset;
